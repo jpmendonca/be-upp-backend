@@ -1,0 +1,88 @@
+version: '3.7'
+
+services:
+
+  # mongo:
+  #   image: mongo:6.0.4
+
+  #   environment:
+  #     # MONGO_INITDB_DATABASE: mongo
+  #     MONGO_INITDB_ROOT_USERNAME: backend
+  #     MONGO_INITDB_ROOT_PASSWORD: beeUpPass
+
+  #   networks:
+  #     - be-upp
+
+  #   ports:
+  #     - 27017:27017
+
+  #   volumes:
+  #     - be_upp_db_mongo:/data/db
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      - AUTH=yes
+      - MONGO_INITDB_ROOT_USERNAME=backend
+      - MONGO_INITDB_ROOT_PASSWORD=beeUpPass
+    volumes:
+      - be_upp_db_mongo:/data/db
+    ports:
+      - "27017:27017"
+
+  mongo-express:
+    image: mongo-express
+
+    restart: unless-stopped
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      - ME_CONFIG_BASICAUTH_USERNAME=beeUp
+      - ME_CONFIG_BASICAUTH_PASSWORD=beeUpPass
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=backend
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=beeUpPass
+      - ME_CONFIG_MONGODB_SERVER=mongo
+
+    depends_on:
+      - mongo
+
+    networks:
+      - be-upp
+
+  api:
+    build:
+      context: .
+
+    image: be-upp-dev/api
+
+    container_name: be-upp-dev-api
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    ports:
+      - ${API_PORT}:${API_PORT}
+
+    environment:
+      API_PORT: ${API_PORT}
+      REACT_APP_API_DOMAIN: ${REACT_APP_API_DOMAIN}
+      MONGO_PORT: ${MONGO_PORT}
+
+    command: ./entrypoint.sh
+
+    networks:
+      - be-upp
+
+    depends_on:
+      - mongo
+
+volumes:
+  be_upp_db_mongo:
+
+networks:
+  be-upp:
+    driver: bridge
