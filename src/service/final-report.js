@@ -1,19 +1,18 @@
-const Model = require('../data/models/final-report');
-const { getAppointmentById } = require('./appointment');
-const {
-  getLatestTemplate,
-} = require('../service/template');
-const { clone } = require('./helper');
-const mongoose = require('mongoose');
+const Model = require("../data/models/final-report");
+const { getAppointmentById } = require("./appointment");
+const { listAppointments } = require("./doctor");
+const { getLatestTemplate } = require("../service/template");
+const { clone } = require("./helper");
+const mongoose = require("mongoose");
 
-const addFinalReportTemplate = async(data) => {
+const addFinalReportTemplate = async (data) => {
   try {
     let data2 = clone(data);
     data2.isTemplate = true;
     if (data2.version === null || data2.version === undefined) {
       data2.version = (await getLatestTemplate()).templateVersion;
     }
-    await Model.find({version: data2.version, isTemplate: true}).remove().exec();
+    await Model.find({ version: data2.version, isTemplate: true }).remove().exec();
     const dado = await Model.create(data2);
     return dado;
   } catch (error) {
@@ -25,10 +24,9 @@ const addFinalReportTemplate = async(data) => {
   }
 };
 
-const getFinalReportTemplateByVersion = async(version) => {
-
+const getFinalReportTemplateByVersion = async (version) => {
   try {
-    const dado = await Model.findOne({version: version, isTemplate: true}).exec();
+    const dado = await Model.findOne({ version: version, isTemplate: true }).exec();
     return dado;
   } catch (error) {
     const err = {
@@ -37,10 +35,9 @@ const getFinalReportTemplateByVersion = async(version) => {
     };
     throw err;
   }
-
 };
 
-const addFinalReportData = async(formData, variables) => {
+const addFinalReportData = async (formData, variables) => {
   try {
     const template = await getFinalReportTemplateByVersion(formData.templateVersion);
     const data = clone(template);
@@ -55,13 +52,12 @@ const addFinalReportData = async(formData, variables) => {
     for (let i in data.pages) {
       for (let j in data.pages[i].values) {
         let aux = variables[data.pages[i].values[j]];
-        if (aux === undefined || aux === null)
-          aux = 'não definido';
+        if (aux === undefined || aux === null) aux = "não definido";
         data.pages[i].values[j] = String(aux);
       }
     }
 
-    await Model.find({appointmentId: data.appointmentId}).remove().exec();
+    await Model.find({ appointmentId: data.appointmentId }).remove().exec();
     const dado = await Model.create(data);
     return dado;
   } catch (error) {
@@ -74,15 +70,12 @@ const addFinalReportData = async(formData, variables) => {
   }
 };
 
-const getFinalReportData = async(appointmentId) => {
-
+const getFinalReportData = async (appointmentId) => {
   try {
     const ap = await getAppointmentById(appointmentId);
-    if (ap == null)
-      return null;
+    if (ap == null) return null;
 
-    const dado = await Model.findOne(
-      {appointmentId: mongoose.Types.ObjectId(appointmentId)}).exec();
+    const dado = await Model.findOne({ appointmentId: mongoose.Types.ObjectId(appointmentId) }).exec();
 
     return dado;
   } catch (error) {
@@ -92,7 +85,44 @@ const getFinalReportData = async(appointmentId) => {
     };
     throw err;
   }
+};
 
+const getFinalReportDataByDoctor = async(doctorId) => {
+  try {
+    const aps = await listAppointments(doctorId);
+
+    if (aps == null) return null;
+
+    let id = 0;
+
+    const ids = [];
+    let dados = [];
+
+    aps.forEach((ap) => {
+      id = mongoose.Types.ObjectId(ap._id);
+      ids.push(id);
+    });
+
+    dados = await Model.find({ appointmentId: { $in: ids } });
+    // dados = await Model.findOne({ appointmentId: mongoose.Types.ObjectId(ap._id) }).exec();
+
+    // aps.then(function (result) {
+    //   const res = result; // Now you can use res everywhere
+    //   console.log(res);
+    // });
+
+    // aps.forEach((ap) => {
+    //   dado.Add(Model.findOne({ appointmentId: mongoose.Types.ObjectId(ap._id) }).exec());
+    // });
+
+    return dados;
+  } catch (error) {
+    const err = {
+      err: error,
+      code: 500,
+    };
+    throw err;
+  }
 };
 
 module.exports = {
@@ -100,4 +130,5 @@ module.exports = {
   getFinalReportTemplateByVersion: getFinalReportTemplateByVersion,
   addFinalReportData: addFinalReportData,
   getFinalReportData: getFinalReportData,
+  getFinalReportDataByDoctor: getFinalReportDataByDoctor,
 };

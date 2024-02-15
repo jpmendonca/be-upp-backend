@@ -33,6 +33,7 @@ router.get('/by-id', authorize(), async(req, res) => {
 });
 
 router.get('/recompute', authorize('admin'), async(req, res) => {
+  console.log(req);
   try {
     const id = req.query ? req.query.id : false;
     if (!id) {
@@ -44,6 +45,10 @@ router.get('/recompute', authorize('admin'), async(req, res) => {
 
     const formData = await getFormDataByAppointmentId(id);
     const variables = await getVariables(formData);
+
+    // console.log(formData);
+
+
     const variables2 = await processData(formData, variables);
 
     const data = await addFinalReportData(formData, variables2);

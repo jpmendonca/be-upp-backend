@@ -7,6 +7,7 @@ router.get('/by-version/:version', async(req, res) => {
   const version = req.params ? req.params.version : null;
   if (version === null) {
     // TODO error
+    console.log('Version Null');
   }
 
   try {
