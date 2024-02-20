@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo "[BE-UPP][INFO ] Container be-upp-api started"
+echo "[BE-UPP][INFO ] Container be-upp-api started NOW!"
 
 # get source files
 mkdir -p /be-upp && cd /be-upp
-git clone https://github.com/BE-UPP/be-upp-backend.git api && cd api
+git clone https://github.com/jpmendonca/be-upp-backend.git api && cd api
 git checkout "develop"
 
 # install project dependencies
